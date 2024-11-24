@@ -106,10 +106,25 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         });
 
         btnBersihkan.setText("Bersihkan");
+        btnBersihkan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBersihkanActionPerformed(evt);
+            }
+        });
 
         btnImpor.setText("Simpan CSV");
+        btnImpor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnImporActionPerformed(evt);
+            }
+        });
 
         btnEkspor.setText("Muat CSV");
+        btnEkspor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEksporActionPerformed(evt);
+            }
+        });
 
         jButton7.setText("Cari");
 
@@ -289,6 +304,22 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         }
     }
     }//GEN-LAST:event_btnHapusActionPerformed
+
+    private void btnBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihkanActionPerformed
+    txtNama.setText("");
+    txtTelepon.setText("");
+    txtJenisKelamin.setText("");
+    txtEmail.setText("");
+    cmbKategori.setSelectedIndex(0);
+    }//GEN-LAST:event_btnBersihkanActionPerformed
+
+    private void btnImporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImporActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnImporActionPerformed
+
+    private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnEksporActionPerformed
 
     /**
      * @param args the command line arguments

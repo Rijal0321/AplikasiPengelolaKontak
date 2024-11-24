@@ -100,7 +100,7 @@ private void muatKontak() {
         btnBersihkan = new javax.swing.JButton();
         btnImpor = new javax.swing.JButton();
         btnEkspor = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
+        btnCari = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -193,7 +193,12 @@ private void muatKontak() {
             }
         });
 
-        jButton7.setText("Cari");
+        btnCari.setText("Cari");
+        btnCari.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCariActionPerformed(evt);
+            }
+        });
 
         jLabel6.setText("Fitur Pencarian Berdasarkan Nomor dan Nama");
 
@@ -231,7 +236,7 @@ private void muatKontak() {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(txtCari, javax.swing.GroupLayout.PREFERRED_SIZE, 315, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(btnCari, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(btnBersihkan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -287,7 +292,7 @@ private void muatKontak() {
                     .addComponent(jLabel5)
                     .addComponent(cmbKategori, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtCari, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton7))
+                    .addComponent(btnCari))
                 .addGap(32, 32, 32)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -414,39 +419,32 @@ private void muatKontak() {
     }//GEN-LAST:event_btnImporActionPerformed
 
     private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed
-     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setDialogTitle("Pilih File CSV");
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Simpan sebagai CSV");
     fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
 
-    if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         File file = fileChooser.getSelectedFile();
-
-        // Validasi jika file bukan CSV
+        
+        // Pastikan file memiliki ekstensi .csv
         if (!file.getName().toLowerCase().endsWith(".csv")) {
-            JOptionPane.showMessageDialog(this, "File yang dipilih bukan file CSV!");
-            return;
+            file = new File(file.getAbsolutePath() + ".csv");
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String baris;
-            while ((baris = reader.readLine()) != null) {
-                String[] data = baris.split(",");
-                String sql = "INSERT INTO kontak (nama, telepon, jenis_kelamin, email, kategori) VALUES (?, ?, ?, ?, ?)";
-                try (Connection conn = KoneksiDatabase.getKoneksi();
-                     PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, data[0]);
-                    stmt.setString(2, data[1]);
-                    stmt.setString(3, data[2]);
-                    stmt.setString(4, data[3]);
-                    stmt.setString(5, data[4]);
-                    stmt.executeUpdate();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (int i = 0; i < tabelKontak.getRowCount(); i++) {
+                for (int j = 1; j < tabelKontak.getColumnCount(); j++) { // Mulai dari indeks 1 untuk melewati kolom nomor/ID
+                    writer.write(tabelKontak.getValueAt(i, j).toString());
+                    if (j < tabelKontak.getColumnCount() - 1) {
+                        writer.write(",");
+                    }
                 }
+                writer.newLine();
             }
-            JOptionPane.showMessageDialog(this, "Kontak berhasil diimpor!");
-            muatKontak();
-        } catch (IOException | SQLException e) {
+            JOptionPane.showMessageDialog(this, "Kontak berhasil diekspor!");
+        } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal mengimpor kontak!");
+            JOptionPane.showMessageDialog(this, "Gagal mengekspor kontak!");
         }
     }
     }//GEN-LAST:event_btnEksporActionPerformed
@@ -497,6 +495,44 @@ private void muatKontak() {
     }
     }//GEN-LAST:event_daftarKategoriValueChanged
 
+    private void btnCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCariActionPerformed
+    String keyword = txtCari.getText().trim();
+    if (keyword.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Masukkan nama atau nomor telepon untuk mencari!");
+        return;
+    }
+
+    DefaultTableModel model = (DefaultTableModel) tabelKontak.getModel();
+    model.setRowCount(0); // Clear the table
+
+    String sql = "SELECT * FROM kontak WHERE nama LIKE ? OR telepon LIKE ?";
+    try (Connection conn = KoneksiDatabase.getKoneksi();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, "%" + keyword + "%"); // Search for name
+        stmt.setString(2, "%" + keyword + "%"); // Search for phone number
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (!rs.isBeforeFirst()) { // Check if the result set is empty
+                JOptionPane.showMessageDialog(this, "Tidak ada kontak yang ditemukan!");
+            } else {
+                while (rs.next()) {
+                    Object[] row = {
+                        rs.getInt("id"),
+                        rs.getString("nama"),
+                        rs.getString("telepon"),
+                        rs.getString("jenis_kelamin"),
+                        rs.getString("email"),
+                        rs.getString("kategori")
+                    };
+                    model.addRow(row);
+                }
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Gagal mencari kontak!");
+    }
+    }//GEN-LAST:event_btnCariActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -534,6 +570,7 @@ private void muatKontak() {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBersihkan;
+    private javax.swing.JButton btnCari;
     private javax.swing.JButton btnEkspor;
     private javax.swing.JButton btnHapus;
     private javax.swing.JButton btnImpor;
@@ -541,7 +578,6 @@ private void muatKontak() {
     private javax.swing.JButton btnUbah;
     private javax.swing.JComboBox<String> cmbKategori;
     private javax.swing.JList<String> daftarKategori;
-    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

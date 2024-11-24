@@ -414,23 +414,39 @@ private void muatKontak() {
     }//GEN-LAST:event_btnImporActionPerformed
 
     private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed
-    JFileChooser fileChooser = new JFileChooser();
-    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+     JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Pilih File CSV");
+    fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
+
+    if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
         File file = fileChooser.getSelectedFile();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (int i = 0; i < tabelKontak.getRowCount(); i++) {
-                for (int j = 0; j < tabelKontak.getColumnCount(); j++) {
-                    writer.write(tabelKontak.getValueAt(i, j).toString());
-                    if (j < tabelKontak.getColumnCount() - 1) {
-                        writer.write(",");
-                    }
+
+        // Validasi jika file bukan CSV
+        if (!file.getName().toLowerCase().endsWith(".csv")) {
+            JOptionPane.showMessageDialog(this, "File yang dipilih bukan file CSV!");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String baris;
+            while ((baris = reader.readLine()) != null) {
+                String[] data = baris.split(",");
+                String sql = "INSERT INTO kontak (nama, telepon, jenis_kelamin, email, kategori) VALUES (?, ?, ?, ?, ?)";
+                try (Connection conn = KoneksiDatabase.getKoneksi();
+                     PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, data[0]);
+                    stmt.setString(2, data[1]);
+                    stmt.setString(3, data[2]);
+                    stmt.setString(4, data[3]);
+                    stmt.setString(5, data[4]);
+                    stmt.executeUpdate();
                 }
-                writer.newLine();
             }
-            JOptionPane.showMessageDialog(this, "Kontak berhasil diekspor!");
-        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Kontak berhasil diimpor!");
+            muatKontak();
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal mengekspor kontak!");
+            JOptionPane.showMessageDialog(this, "Gagal mengimpor kontak!");
         }
     }
     }//GEN-LAST:event_btnEksporActionPerformed

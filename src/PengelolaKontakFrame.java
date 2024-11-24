@@ -92,6 +92,11 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         });
 
         btnUbah.setText("Ubah");
+        btnUbah.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUbahActionPerformed(evt);
+            }
+        });
 
         btnHapus.setText("Hapus");
 
@@ -240,6 +245,28 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "Gagal menambah kontak!");
     }
     }//GEN-LAST:event_btnTambahActionPerformed
+
+    private void btnUbahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUbahActionPerformed
+    String sql = "UPDATE kontak SET nama = ?, telepon = ?, jenis_kelamin = ?, email = ?, kategori = ? WHERE id = ?";
+    int selectedRow = tabelKontak.getSelectedRow();
+    if (selectedRow != -1) {
+        try (Connection conn = KoneksiDatabase.getKoneksi();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, txtNama.getText());
+            stmt.setString(2, txtTelepon.getText());
+            stmt.setString(3, txtJenisKelamin.getText());
+            stmt.setString(4, txtEmail.getText());
+            stmt.setString(5, cmbKategori.getSelectedItem().toString());
+            stmt.setInt(6, Integer.parseInt(tabelKontak.getValueAt(selectedRow, 0).toString()));
+            stmt.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Kontak berhasil diubah!");
+            muatKontak();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal mengubah kontak!");
+        }
+    }
+    }//GEN-LAST:event_btnUbahActionPerformed
 
     /**
      * @param args the command line arguments

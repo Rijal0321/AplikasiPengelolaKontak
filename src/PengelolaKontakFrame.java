@@ -1,14 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
 
-/**
- *
- * @author User
- */
 public class PengelolaKontakFrame extends javax.swing.JFrame {
-
+    
+ private Connection connection;
     /**
      * Creates new form PengelolaKontakFrame
      */
@@ -88,6 +85,11 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         jScrollPane2.setViewportView(daftarKategori);
 
         btnTambah.setText("Tambah");
+        btnTambah.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTambahActionPerformed(evt);
+            }
+        });
 
         btnUbah.setText("Ubah");
 
@@ -220,6 +222,24 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnTambahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahActionPerformed
+    String sql = "INSERT INTO kontak (nama, telepon, jenis_kelamin, email, kategori) VALUES (?, ?, ?, ?, ?)";
+    try (Connection conn = KoneksiDatabase.getKoneksi();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, txtNama.getText());
+        stmt.setString(2, txtTelepon.getText());
+        stmt.setString(3, txtJenisKelamin.getText());
+        stmt.setString(4, txtEmail.getText());
+        stmt.setString(5, cmbKategori.getSelectedItem().toString());
+        stmt.executeUpdate();
+        JOptionPane.showMessageDialog(this, "Kontak berhasil ditambahkan!");
+        muatKontak();
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Gagal menambah kontak!");
+    }
+    }//GEN-LAST:event_btnTambahActionPerformed
 
     /**
      * @param args the command line arguments

@@ -5,19 +5,68 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class PengelolaKontakFrame extends javax.swing.JFrame {
     
  private Connection connection;
-    /**
-     * Creates new form PengelolaKontakFrame
-     */
+ 
     public PengelolaKontakFrame() {
         initComponents();
+        muatKontak();
+    }
+    
+    
+private void muatKontak() {
+    DefaultTableModel model = (DefaultTableModel) tabelKontak.getModel();
+    model.setRowCount(0); // Bersihkan tabel
+    String sql = "SELECT * FROM kontak";
+    try (Connection conn = KoneksiDatabase.getKoneksi();
+         PreparedStatement stmt = conn.prepareStatement(sql);
+         ResultSet rs = stmt.executeQuery()) {
+        while (rs.next()) {
+            Object[] row = {
+                rs.getInt("id"),
+                rs.getString("nama"),
+                rs.getString("telepon"),
+                rs.getString("jenis_kelamin"),
+                rs.getString("email"),
+                rs.getString("kategori")
+            };
+            model.addRow(row);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    
+}
+    private void resetID() {
+        String sqlSelect = "SELECT * FROM kontak ORDER BY id";
+        String sqlUpdate = "UPDATE kontak SET id = ? WHERE id = ?";
+        try (Connection conn = KoneksiDatabase.getKoneksi();
+             PreparedStatement stmtSelect = conn.prepareStatement(sqlSelect);
+             PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdate);
+             ResultSet rs = stmtSelect.executeQuery()) {
+
+            int newId = 1; // Mulai dari ID 1
+            while (rs.next()) {
+                int currentId = rs.getInt("id");
+                if (currentId != newId) { // Jika ID tidak sesuai urutan, perbarui
+                    stmtUpdate.setInt(1, newId); // ID baru
+                    stmtUpdate.setInt(2, currentId); // ID lama
+                    stmtUpdate.executeUpdate();
+                }
+                newId++;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal mereset ID!");
+        }
     }
 
     /**
@@ -69,17 +118,23 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
 
         jLabel5.setText("Kategori");
 
+        txtTelepon.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtTeleponKeyTyped(evt);
+            }
+        });
+
         cmbKategori.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Keluarga", "Teman", "Kerja" }));
 
         tabelKontak.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Nama", "Nomor Telepon", "Jenis Kelamin", "Email", "Kategori"
+                "No", "Nama", "Nomor Telepon", "Jenis Kelamin", "Email", "Kategori"
             }
         ));
         jScrollPane1.setViewportView(tabelKontak);
@@ -88,6 +143,11 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
             String[] strings = { "Semua Kategori", "Keluarga", "Teman", "Kerja" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
+        });
+        daftarKategori.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                daftarKategoriValueChanged(evt);
+            }
         });
         jScrollPane2.setViewportView(daftarKategori);
 
@@ -119,14 +179,14 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
             }
         });
 
-        btnImpor.setText("Simpan CSV");
+        btnImpor.setText("Muat CSV");
         btnImpor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImporActionPerformed(evt);
             }
         });
 
-        btnEkspor.setText("Muat CSV");
+        btnEkspor.setText("Simpan CSV");
         btnEkspor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnEksporActionPerformed(evt);
@@ -296,20 +356,25 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnUbahActionPerformed
 
     private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
-    int selectedRow = tabelKontak.getSelectedRow();
-    if (selectedRow != -1) {
-        String sql = "DELETE FROM kontak WHERE id = ?";
-        try (Connection conn = KoneksiDatabase.getKoneksi();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, Integer.parseInt(tabelKontak.getValueAt(selectedRow, 0).toString()));
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Kontak berhasil dihapus!");
-            muatKontak();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal menghapus kontak!");
+       int selectedRow = tabelKontak.getSelectedRow();
+        if (selectedRow >= 0) {
+            int id = (int) tabelKontak.getValueAt(selectedRow, 0);
+            String sql = "DELETE FROM kontak WHERE id = ?";
+            try (Connection conn = KoneksiDatabase.getKoneksi();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Kontak berhasil dihapus!");
+                
+                resetID(); // Panggil metode untuk merapikan ID
+                muatKontak(); // Perbarui tabel
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Gagal menghapus kontak!");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Pilih kontak yang ingin dihapus!");
         }
-    }
     }//GEN-LAST:event_btnHapusActionPerformed
 
     private void btnBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihkanActionPerformed
@@ -369,6 +434,52 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         }
     }
     }//GEN-LAST:event_btnEksporActionPerformed
+
+    private void txtTeleponKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTeleponKeyTyped
+        char c = evt.getKeyChar();
+        // Hanya izinkan angka dan tombol penghapus
+        if (!Character.isDigit(c) && c != '\b') {
+            evt.consume(); // Mencegah karakter non-angka
+        }
+    
+    }//GEN-LAST:event_txtTeleponKeyTyped
+
+    private void daftarKategoriValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_daftarKategoriValueChanged
+    if (!evt.getValueIsAdjusting()) {
+        String kategoriDipilih = daftarKategori.getSelectedValue(); // Ambil kategori yang dipilih
+        
+        // Tampilkan semua data jika "Semua Kategori" dipilih
+        if ("Semua Kategori".equals(kategoriDipilih)) {
+            muatKontak();
+            return;
+        }
+
+        // Query untuk mengambil data berdasarkan kategori
+        DefaultTableModel model = (DefaultTableModel) tabelKontak.getModel();
+        model.setRowCount(0); // Bersihkan tabel
+        String sql = "SELECT * FROM kontak WHERE kategori = ?";
+        try (Connection conn = KoneksiDatabase.getKoneksi();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, kategoriDipilih);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] row = {
+                        rs.getInt("id"),
+                        rs.getString("nama"),
+                        rs.getString("telepon"),
+                        rs.getString("jenis_kelamin"),
+                        rs.getString("email"),
+                        rs.getString("kategori")
+                    };
+                    model.addRow(row);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal memuat kontak berdasarkan kategori!");
+        }
+    }
+    }//GEN-LAST:event_daftarKategoriValueChanged
 
     /**
      * @param args the command line arguments

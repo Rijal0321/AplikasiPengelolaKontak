@@ -1,5 +1,7 @@
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -319,7 +321,31 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBersihkanActionPerformed
 
     private void btnImporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImporActionPerformed
-        // TODO add your handling code here:
+    JFileChooser fileChooser = new JFileChooser();
+    if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+        File file = fileChooser.getSelectedFile();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String baris;
+            while ((baris = reader.readLine()) != null) {
+                String[] data = baris.split(",");
+                String sql = "INSERT INTO kontak (nama, telepon, jenis_kelamin, email, kategori) VALUES (?, ?, ?, ?, ?)";
+                try (Connection conn = KoneksiDatabase.getKoneksi();
+                     PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, data[0]);
+                    stmt.setString(2, data[1]);
+                    stmt.setString(3, data[2]);
+                    stmt.setString(4, data[3]);
+                    stmt.setString(5, data[4]);
+                    stmt.executeUpdate();
+                }
+            }
+            JOptionPane.showMessageDialog(this, "Kontak berhasil diimpor!");
+            muatKontak();
+        } catch (IOException | SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal mengimpor kontak!");
+        }
+    }
     }//GEN-LAST:event_btnImporActionPerformed
 
     private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed

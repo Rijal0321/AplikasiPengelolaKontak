@@ -1,6 +1,11 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 public class PengelolaKontakFrame extends javax.swing.JFrame {
@@ -318,7 +323,25 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnImporActionPerformed
 
     private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed
-        // TODO add your handling code here:
+    JFileChooser fileChooser = new JFileChooser();
+    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+        File file = fileChooser.getSelectedFile();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (int i = 0; i < tabelKontak.getRowCount(); i++) {
+                for (int j = 0; j < tabelKontak.getColumnCount(); j++) {
+                    writer.write(tabelKontak.getValueAt(i, j).toString());
+                    if (j < tabelKontak.getColumnCount() - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this, "Kontak berhasil diekspor!");
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal mengekspor kontak!");
+        }
+    }
     }//GEN-LAST:event_btnEksporActionPerformed
 
     /**

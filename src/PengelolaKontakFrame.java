@@ -99,6 +99,11 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         });
 
         btnHapus.setText("Hapus");
+        btnHapus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHapusActionPerformed(evt);
+            }
+        });
 
         btnBersihkan.setText("Bersihkan");
 
@@ -251,7 +256,7 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
     int selectedRow = tabelKontak.getSelectedRow();
     if (selectedRow != -1) {
         try (Connection conn = KoneksiDatabase.getKoneksi();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, txtNama.getText());
             stmt.setString(2, txtTelepon.getText());
             stmt.setString(3, txtJenisKelamin.getText());
@@ -267,6 +272,23 @@ public class PengelolaKontakFrame extends javax.swing.JFrame {
         }
     }
     }//GEN-LAST:event_btnUbahActionPerformed
+
+    private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
+    int selectedRow = tabelKontak.getSelectedRow();
+    if (selectedRow != -1) {
+        String sql = "DELETE FROM kontak WHERE id = ?";
+        try (Connection conn = KoneksiDatabase.getKoneksi();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, Integer.parseInt(tabelKontak.getValueAt(selectedRow, 0).toString()));
+            stmt.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Kontak berhasil dihapus!");
+            muatKontak();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal menghapus kontak!");
+        }
+    }
+    }//GEN-LAST:event_btnHapusActionPerformed
 
     /**
      * @param args the command line arguments
